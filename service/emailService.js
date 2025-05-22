@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendVerificationEmail = async (email, verificationToken) => {
-  const verificationLink = `http://localhost:5050/user/verify/${verificationToken}`;
+  const verificationLink = `https://swbackstg.vercel.app/user/verify/${verificationToken}`;
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
