@@ -293,7 +293,7 @@ const GenerateQuestion = async (req, res) => {
 
     // Requête GET avec paramètre dans l'URL
     const response = await axios.get(
-      " http://localhost:4000/api/generate_question",
+      "https://ai.votly.co/api/generate_question",
 
       {
         params: { prompt },
