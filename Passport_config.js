@@ -43,33 +43,32 @@ passport.use(
   )
 );
 // Stratégie GitHub
-passport.use(
-  new GitHubStrategy(
-    {
-      clientID: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: 'https://swbackstg.vercel.app/user/github/callback',
-      scope: ['user:email'],
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        let user = await User.findOne({ githubId: profile.id });
+passport.use(new GitHubStrategy(
+  {
+    clientID: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    callbackURL: "http://localhost:5000/user/github/callback",
+    scope: ["user:email"]
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      let user = await User.findOne({ githubId: profile.id });
 
-        if (!user) {
-          // Nouvel utilisateur => Inscription
-          user = await User.create({
-            githubId: profile.id,
-            username: profile.username,
-            email: profile.emails?.[0]?.value || null,
-          });
-        }
-
-        return done(null, user);
-      } catch (err) {
-        return done(err, null);
+      if (!user) {
+        // Nouvel utilisateur => Inscription
+        user = await User.create({
+          githubId: profile.id,
+          username: profile.username,
+          email: profile.emails?.[0]?.value || null,
+        });
       }
-    },
-  ),
+
+      return done(null, user);
+    } catch (err) {
+      return done(err, null);
+    }
+  }
+)
 );
 // Stratégie Google
 passport.use(new GoogleStrategy({

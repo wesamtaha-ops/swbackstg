@@ -196,7 +196,7 @@ module.exports = {
             if (!user) {
                 return res.status(200).json({
                     message: 'User does not exist. Redirecting to register',
-                    redirectUrl: 'http://localhost:5173/signup',
+                    redirectUrl: 'https://staging.votly.co/signup',
                     email: email,
                     role: invitation.role,
                     entityId: invitation.company ? invitation.company._id : invitation.workspace._id,
@@ -237,7 +237,7 @@ module.exports = {
 
             return res.status(200).json({
                 message: 'Invitation accepted successfully. Redirecting to login.',
-                redirectUrl: 'http://localhost:5173/login',
+                redirectUrl: 'https://staging.votly.co/login',
                 entityId: invitation.company ? invitation.company._id : invitation.workspace._id
 
                 ,

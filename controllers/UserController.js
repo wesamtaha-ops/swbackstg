@@ -131,21 +131,21 @@ module.exports = {
       const user = await User.findOne({ email: decoded.email });
 
       if (!user) {
-        return res.status(404).json({ msg: "Utilisateur non trouvé", error: true });
+        return res.status(404).json({ msg: "User not found", error: true });
       }
 
       if (user.isVerified) {
-        return res.status(400).json({ msg: "Compte déjà vérifié", error: false });
+        return res.status(400).json({ msg: "Account already verified", error: false });
       }
 
       user.isVerified = true;
       await user.save();
 
-      // ✅ Rediriger vers le frontend après vérification
-      res.redirect('http://localhost:5173/login?verified=true');
+      // ✅ Redirect to frontend after verification
+      res.redirect('https://staging.votly.co/login?verified=true');
 
     } catch (error) {
-      res.status(400).json({ msg: "Lien de vérification invalide ou expiré", error: true });
+      res.status(400).json({ msg: "Invalid or expired verification link", error: true });
     }
   },
 
@@ -209,7 +209,7 @@ module.exports = {
     const refreshToken = req.cookies.refresh_token;
 
     if (!refreshToken) {
-      return res.status(401).json({ message: "Refresh token manquant !" });
+      return res.status(401).json({ message: "Refresh token missing!" });
     }
 
     try {
@@ -217,7 +217,7 @@ module.exports = {
       const user = await User.findById(decoded.sub);
 
       if (!user) {
-        return res.status(403).json({ message: "Utilisateur non trouvé !" });
+        return res.status(403).json({ message: "User not found!" });
       }
 
 
@@ -235,7 +235,7 @@ module.exports = {
       });
 
     } catch (error) {
-      return res.status(403).json({ message: "Refresh token invalide ou expiré !" });
+      return res.status(403).json({ message: "Refresh token invalid or expired!" });
     }
 
   },
@@ -289,7 +289,7 @@ module.exports = {
 
   githubCallback: function (req, res) {
 
-    res.redirect('http://localhost:5173/dashboard');
+    res.redirect('https://staging.votly.co/dashboard');
   },
 
 
@@ -307,83 +307,203 @@ module.exports = {
 `);
   },
 
-  forgotPassword: async function (req, res) {
-    const { email } = req.body;
+// Correction de la fonction forgotPassword
+forgotPassword: async function (req, res) {
+  const { email } = req.body;
 
-    try {
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(404).json({
-          msg: "Si cette adresse existe, vous recevrez un email de réinitialisation.",
-          error: false
-        });
-      }
-
-      const resetToken = jwt.sign(
-        { id: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-      );
-
-      // Stocker le token de réinitialisation et sa date d'expiration
-      user.resetPasswordToken = resetToken;
-      user.resetPasswordExpires = Date.now() + 3600000; // 1 heure
-      await user.save();
-
-      const emailSent = await sendResetPasswordEmail(email, resetToken);
-      if (!emailSent) {
-        return res.status(500).json({
-          msg: "Erreur lors de l'envoi de l'email",
-          error: true
-        });
-      }
-
-      return res.status(200).json({
-        msg: "Si cette adresse existe, vous recevrez un email de réinitialisation.",
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        msg: "If this email exists, you will receive a password reset email.",
         error: false
       });
-    } catch (error) {
+    }
+
+    console.log("=== FORGOT PASSWORD DEBUG ===");
+    console.log("User found:", user.email, user._id);
+
+    // Générer un token de réinitialisation
+    const resetToken = jwt.sign(
+      { 
+        userId: user._id.toString(), // S'assurer que c'est une string
+        email: user.email,
+        type: 'password-reset' // Ajouter un type pour plus de sécurité
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    console.log("Token généré:", resetToken);
+
+    // Stocker le token de réinitialisation et sa date d'expiration
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 heure
+    await user.save();
+
+    console.log("Token stocké:", user.resetPasswordToken);
+    console.log("Expire à:", user.resetPasswordExpires);
+
+    const emailSent = await sendResetPasswordEmail(email, resetToken);
+    if (!emailSent) {
       return res.status(500).json({
-        msg: "Une erreur est survenue",
+        msg: "Error sending email",
         error: true
       });
     }
-  },
 
-  resetPassword: async function (req, res) {
-    const { token, password } = req.body;
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findOne({
-        _id: decoded.id,
+    return res.status(200).json({
+      msg: "If this email exists, you will receive a password reset email.",
+      error: false
+    });
+  } catch (error) {
+    console.error("Erreur forgotPassword:", error);
+    return res.status(500).json({
+      msg: "An error occurred",
+      error: true
+    });
+  }
+},
+
+// Correction de la fonction resetPassword dans UserController.js
+resetPassword: async function (req, res) {
+  const { token, password } = req.body;
+  
+  console.log("=== RESET PASSWORD DEBUG ===");
+  console.log("Token reçu:", token);
+  console.log("Password reçu:", password ? "***" : "vide");
+  
+  try {
+    // Vérifier si le token et le password sont présents
+    if (!token || !password) {
+      console.log("Token ou password manquant");
+      return res.status(400).json({
+        msg: "Token et mot de passe requis",
+        error: true
+      });
+    }
+
+    // Vérifier la longueur minimale du mot de passe
+    if (password.length < 6) {
+      console.log("Password trop court");
+      return res.status(400).json({
+        msg: "Le mot de passe doit contenir au moins 6 caractères",
+        error: true
+      });
+    }
+
+    // Décoder le token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Token décodé:", decoded);
+    
+    // Rechercher l'utilisateur avec toutes les conditions
+    const user = await User.findOne({
+      _id: decoded.userId || decoded.id,
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      // Essayer de trouver par email si userId ne fonctionne pas
+      const userByEmail = await User.findOne({
+        email: decoded.email,
         resetPasswordToken: token,
         resetPasswordExpires: { $gt: Date.now() }
       });
-
-      if (!user) {
+      
+      if (!userByEmail) {
         return res.status(400).json({
           msg: "Le lien de réinitialisation est invalide ou a expiré",
           error: true
         });
       }
-
-      // Mettre à jour le mot de passe
-      user.password = password;
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpires = undefined;
-      await user.save();
-
+      
+      // CORRECTION : Ne pas hacher ici, laisser le middleware le faire
+      userByEmail.password = password; // Mot de passe en clair
+      userByEmail.resetPasswordToken = undefined;
+      userByEmail.resetPasswordExpires = undefined;
+      await userByEmail.save(); // Le middleware pre('save') va hacher automatiquement
+      
+      console.log("Mot de passe mis à jour pour:", userByEmail.email);
+      
       return res.status(200).json({
         msg: "Votre mot de passe a été réinitialisé avec succès",
         error: false
       });
-    } catch (error) {
-      return res.status(500).json({
-        msg: "Une erreur est survenue",
+    }
+
+    // CORRECTION : Ne pas hacher ici, laisser le middleware le faire
+    user.password = password; // Mot de passe en clair
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    
+    await user.save(); // Le middleware pre('save') va hacher automatiquement
+
+    console.log("Mot de passe mis à jour pour l'utilisateur:", user.email);
+
+    return res.status(200).json({
+      msg: "Votre mot de passe a été réinitialisé avec succès",
+      error: false
+    });
+    
+  } catch (error) {
+    console.error("Erreur lors de la réinitialisation:", error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(400).json({
+        msg: "Token invalide",
         error: true
       });
     }
-  },
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(400).json({
+        msg: "Le lien de réinitialisation a expiré",
+        error: true
+      });
+    }
+    
+    return res.status(500).json({
+      msg: "Une erreur est survenue lors de la réinitialisation",
+      error: true
+    });
+  }
+},
+// À ajouter temporairement dans UserController.js pour le debug
+checkToken: async function (req, res) {
+  const { token } = req.params;
+  
+  try {
+    console.log("=== CHECK TOKEN DEBUG ===");
+    console.log("Token à vérifier:", token);
+    
+    // Décoder le token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Token décodé:", decoded);
+    
+    // Chercher l'utilisateur
+    const user = await User.findOne({ resetPasswordToken: token });
+    console.log("Utilisateur avec ce token:", user ? {
+      email: user.email,
+      tokenExpires: user.resetPasswordExpires,
+      tokenValid: user.resetPasswordExpires > Date.now()
+    } : "Non trouvé");
+    
+    return res.status(200).json({
+      decoded,
+      user: user ? {
+        email: user.email,
+        tokenExpires: user.resetPasswordExpires,
+        tokenValid: user.resetPasswordExpires > Date.now(),
+        currentTime: new Date(Date.now())
+      } : null
+    });
+    
+  } catch (error) {
+    console.error("Erreur check token:", error);
+    return res.status(400).json({ error: error.message });
+  }
+},
 
 
   deleteUser: async function (req, res) {
@@ -435,11 +555,11 @@ module.exports = {
       const { userId, newRole, entityId, entityType, confirmReassign } = req.body;
 
       if (!userId || !newRole || !entityId || !entityType) {
-        return res.status(400).json({ message: "Tous les champs sont obligatoires" });
+        return res.status(400).json({ message: "All fields are required" });
       }
 
       const user = await User.findById(userId);
-      if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+      if (!user) return res.status(404).json({ message: "User not found" });
 
       // Si le rôle est workspaceOwner, vérifier si un autre utilisateur possède ce rôle
       if (newRole === "workspaceOwner") {
@@ -460,7 +580,7 @@ module.exports = {
           // Si confirmReassign est fourni, réattribuer le rôle workspaceOwner à un autre utilisateur
           const newOwner = await User.findById(confirmReassign);
           if (!newOwner) {
-            return res.status(404).json({ message: "Utilisateur à assigner non trouvé" });
+            return res.status(404).json({ message: "User to assign not found" });
           }
 
           // Mettre à jour l'ancien propriétaire pour lui donner un role inferieur

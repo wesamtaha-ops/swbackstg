@@ -2,11 +2,11 @@ const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const getAccessToken = async (code) => {
   const body = new URLSearchParams({
-    grant_type: 'authorization_code',
+    grant_type: "authorization_code",
     code: code,
     client_id: process.env.LINKEDIN_CLIENT_ID,
     client_secret: process.env.LINKEDIN_CLIENT_SECRET,
-    redirect_uri: 'https://swbackstg.vercel.app/api/linkedin/callback',
+    redirect_uri: "http://localhost:5000/api/linkedin/callback",
   });
   const response = await fetch(
     "https://www.linkedin.com/oauth/v2/accessToken",
@@ -87,7 +87,7 @@ linkedInCallback : async  function (req, res)  {
          httpOnly: true,
     });
 
-    res.redirect("http://localhost:5173/dashboard");
+    res.redirect("https://staging.votly.co/dashboard");
   } catch (error) {
     res.status(500).json({
       success: false,

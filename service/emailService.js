@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendVerificationEmail = async (email, verificationToken) => {
-  const verificationLink = `https://swbackstg.vercel.app/user/verify/${verificationToken}`;
+  const verificationLink = `http://localhost:5000/user/verify/${verificationToken}`;
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
@@ -36,7 +36,7 @@ const sendVerificationEmail = async (email, verificationToken) => {
 };
 
 const sendResetPasswordEmail = async (email, resetToken) => {
-  const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+  const resetLink = `https://staging.votly.co/reset-password/${resetToken}`;
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
@@ -60,13 +60,6 @@ const sendResetPasswordEmail = async (email, resetToken) => {
     return false;
   }
 };
-
-
-
-
-
-
-
 module.exports = {
   sendVerificationEmail,
   sendResetPasswordEmail

@@ -18,6 +18,9 @@ Router.get(
 );
 
 Router.post("/login", UserController.login);
+Router.post("/forgot-password", UserController.forgotPassword);
+Router.post("/reset-password", UserController.resetPassword);
+
 
 Router.get(
   "/profile",

@@ -122,7 +122,7 @@ const CheckOut = async (req, res) => {
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       success_url: `${process.env.BASE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: "http://localhost:5173/billinguser",
+      cancel_url: "https://staging.votly.co/billinguser",
       metadata: {
         userId,
         plan, // ✅ Enregistre le plan sélectionné pour l'utiliser après le paiement
@@ -199,7 +199,7 @@ const Success = async (req, res) => {
     );
 
     console.log(`✅ Abonnement mis à jour pour ${user.email}`);
-    res.redirect("http://localhost:5173/pricing");
+    res.redirect("https://staging.votly.co/pricing");
   } catch (err) {
     console.error("🔴 Erreur lors du traitement de la session :", err);
     res.status(500).json({ error: err.message });

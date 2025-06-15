@@ -14,7 +14,7 @@
 //       {
 //         clientID: process.env.GOOGLE_CLIENT_ID,
 //         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-//         callbackURL: "https://swbackstg.vercel.app/user/google/callback",
+//         callbackURL: "http://localhost:5000/user/google/callback",
 //       },
 //       function (accessToken, refreshToken, profile, cb) {
 //         console.log(profile);

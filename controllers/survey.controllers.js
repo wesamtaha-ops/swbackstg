@@ -348,7 +348,7 @@ const PublishSurvey = async (req, res) => {
 
     // 📌 Generate the survey link
     const clientEmail = req.body.email;
-    const surveyLink = `http://localhost:5173/survey?id=${
+    const surveyLink = `https://staging.votly.co/survey?id=${
       survey._id
     }&email=${encodeURIComponent(clientEmail)}`;
 
@@ -607,7 +607,7 @@ const RetargetSurvey = async (req, res) => {
     }
 
     // 📌 Générer le lien du sondage
-    const surveyLink = `http://localhost:5173/survey?id=${
+    const surveyLink = `https://staging.votly.co/survey?id=${
       survey._id
     }&email=${encodeURIComponent(email)}`;
 

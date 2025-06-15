@@ -42,6 +42,15 @@ var userSchema = new mongoose.Schema(
     stripeCustomerId: String,
     subscriptionId: String,
     subscriptionEnd: Date,
+     // Champs pour la réinitialisation du mot de passe
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
+    },
 
     role: {
       type: String,
@@ -67,14 +76,26 @@ var userSchema = new mongoose.Schema(
 );
 
 //Presave middleware - NOTE: if use arrow function, this becomes empty object, and we can't use isModified()
+//Correction du middleware pre-save dans user.js
 userSchema.pre("save", function (next) {
-  //If there's no change to password field (no change, no add new), call next()
+  console.log("=== MIDDLEWARE PRE-SAVE DEBUG ===");
+  console.log("Password modifié:", this.isModified("password"));
+  console.log("Password actuel:", this.password ? "***" : "vide");
+  
+  //Si il n'y a pas de changement sur le champ password, appeler next()
   if (!this.isModified("password")) {
-    next();
+    console.log("Password non modifié, passage sans hachage");
+    return next();
   }
-
-  bcrypt.hash(this.password, 10, (err, hashedPassword) => {
-    if (err) return next(err);
+  console.log("Hachage du password en cours...");
+  
+  bcrypt.hash(this.password, 12, (err, hashedPassword) => { // Augmenter le salt à 12 pour plus de sécurité
+    if (err) {
+      console.error("Erreur lors du hachage:", err);
+      return next(err);
+    }
+    
+    console.log("Password haché avec succès");
     this.password = hashedPassword;
     return next();
   });
