@@ -47,7 +47,7 @@ passport.use(new GitHubStrategy(
   {
     clientID: process.env.GITHUB_CLIENT_ID,
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    callbackURL: "http://localhost:5000/user/github/callback",
+    callbackURL: "https://backend.votly.app/user/github/callback",
     scope: ["user:email"]
   },
   async (accessToken, refreshToken, profile, done) => {
